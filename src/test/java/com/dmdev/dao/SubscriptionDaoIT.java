@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SubscriptionDaoIT extends IntegrationTestBase {
 
-    SubscriptionDao dao = SubscriptionDao.getInstance();
+    private final SubscriptionDao dao = SubscriptionDao.getInstance();
 
     @Test
     void findAll() {
@@ -53,7 +53,7 @@ class SubscriptionDaoIT extends IntegrationTestBase {
     void findByIdIfEntityNotExist() {
         var subscription = dao.insert(getSubscription(1, "Music"));
 
-        Optional<Subscription> actualResult = dao.findById(1000);
+        Optional<Subscription> actualResult = dao.findById(123456789);
 
         assertThat(actualResult).isEmpty();
     }
@@ -71,7 +71,7 @@ class SubscriptionDaoIT extends IntegrationTestBase {
     void deleteNotExistingEntity() {
         var subscription = dao.insert(getSubscription(1, "Music"));
 
-        boolean actualResult = dao.delete(1000);
+        boolean actualResult = dao.delete(123456789);
 
         assertFalse(actualResult);
     }

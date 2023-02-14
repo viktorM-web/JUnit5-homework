@@ -38,7 +38,6 @@ class SubscriptionServiceTest {
     private CreateSubscriptionMapper createSubscriptionMapper;
     @Mock
     private CreateSubscriptionValidator createSubscriptionValidator;
-    @Mock
     private Clock clock;
     @InjectMocks
     private SubscriptionService subscriptionService;
@@ -81,35 +80,21 @@ class SubscriptionServiceTest {
 
     @Test
     void upsertIfInvalidDto() {
-        CreateSubscriptionDto dto = CreateSubscriptionDto.builder()
-                .userId(11)
-                .name("")
-                .provider(APPLE.name())
-                .expirationDate(Instant.now().plus(Duration.ofDays(10).truncatedTo(SECONDS)))
-                .build();
+        Instant instant = Instant.now().plus(Duration.ofDays(10).truncatedTo(SECONDS));
+        CreateSubscriptionDto dto = getSubscriptionDto(instant);
+
         var validationResult = new ValidationResult();
         validationResult.add(Error.of(101, "name is invalid"));
         doReturn(validationResult).when(createSubscriptionValidator).validate(dto);
 
-        var exception = assertThrows(ValidationException.class, () -> subscriptionService.upsert(dto));
+        assertThrows(ValidationException.class, () -> subscriptionService.upsert(dto));
     }
 
     @Test
     void upsertIfValidDtoAndNotExistInDataBase() {
         Instant instant = Instant.now().plus(Duration.ofDays(10).truncatedTo(SECONDS));
-        CreateSubscriptionDto dto = CreateSubscriptionDto.builder()
-                .userId(11)
-                .name("Music")
-                .provider(APPLE.name())
-                .expirationDate(instant)
-                .build();
-        Subscription subscription = Subscription.builder()
-                .userId(11)
-                .name("Music")
-                .provider(APPLE)
-                .expirationDate(instant)
-                .status(EXPIRED)
-                .build();
+        CreateSubscriptionDto dto = getSubscriptionDto(instant);
+        Subscription subscription = getSubscription().setExpirationDate(instant);
 
         doReturn(new ValidationResult()).when(createSubscriptionValidator).validate(dto);
         doReturn(List.of()).when(subscriptionDao).findByUserId(dto.getUserId());
@@ -124,19 +109,8 @@ class SubscriptionServiceTest {
     @Test
     void upsertIfValidDtoAndExistInDataBase() {
         Instant instant = Instant.now().plus(Duration.ofDays(10).truncatedTo(SECONDS));
-        CreateSubscriptionDto dto = CreateSubscriptionDto.builder()
-                .userId(11)
-                .name("Music")
-                .provider(APPLE.name())
-                .expirationDate(instant)
-                .build();
-        Subscription subscription = Subscription.builder()
-                .userId(11)
-                .name("Music")
-                .provider(APPLE)
-                .expirationDate(instant)
-                .status(EXPIRED)
-                .build();
+        CreateSubscriptionDto dto = getSubscriptionDto(instant);
+        Subscription subscription = getSubscription().setExpirationDate(instant);
 
         doReturn(new ValidationResult()).when(createSubscriptionValidator).validate(dto);
         doReturn(List.of(subscription)).when(subscriptionDao).findByUserId(dto.getUserId());
@@ -154,6 +128,15 @@ class SubscriptionServiceTest {
                 .provider(APPLE)
                 .expirationDate(Instant.now().plus(Duration.ofDays(10).truncatedTo(SECONDS)))
                 .status(EXPIRED)
+                .build();
+    }
+
+    private static CreateSubscriptionDto getSubscriptionDto(Instant instant) {
+        return CreateSubscriptionDto.builder()
+                .userId(11)
+                .name("Music")
+                .provider(APPLE.name())
+                .expirationDate(instant)
                 .build();
     }
 }
